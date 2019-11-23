@@ -22,6 +22,9 @@ body {
                   max-width: 42em;
                 }
 
+.cover-heading {
+  white-space: pre-line;
+}
 
                 /*
                  *  * Header
