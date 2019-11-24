@@ -62,10 +62,12 @@ let app = new Vue({
       if (this.stopped) {
         this.mediaRecorder.start()
         this.recordedChunks = []
+        this.mainText = 'Recording...'
         this.buttonText = 'Stop recording'
       } else {
         this.mediaRecorder.stop()
-        this.buttonText = 'Uploading and analyzing...'
+        this.mainText = 'Uploading and analyzing...'
+        this.buttonText = 'Please wait'
         this.buttonDisabled = true
       }
       this.stopped = !this.stopped

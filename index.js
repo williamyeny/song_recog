@@ -5,6 +5,8 @@ let upload = multer({ dest: 'uploads/' })
 let request = require('request')
 let port = process.env.PORT || 3000
 let fs = require('fs');
+let speech = require('@google-cloud/speech')
+let client = new speech.SpeechClient()
 
 app.use(express.static('public'))
 app.set('view engine', 'pug')
@@ -28,6 +30,23 @@ app.post('/upload', upload.single('audio'), function (req, res) {
     console.log(body)
     res.json(body)
   });
+
+  let file = fs.readFileSync(req.file.path)
+  let audioRequest = {
+    audio: {
+      content: file.toString('base64')
+    },
+    config: {
+      languageCode: 'en-US',
+      encoding: 'LINEAR16'
+    }
+  }
+  client.recognize(audioRequest).then((data) => {
+    const transcription = data.response.results
+      .map(result => result.alternatives[0].transcript)
+      .join('\n');
+    console.log(`Transcription: ${transcription}`);
+  })
 })
 
 
