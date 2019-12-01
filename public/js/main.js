@@ -40,7 +40,7 @@ let app = new Vue({
               vm.buttonDisabled = false
               vm.buttonText = 'Start recording'
               
-              if (data.status === 'success') {
+              if (data.status === 'success' && data.result != null) {
                 result = data.result
                 vm.mainText = `
                   Title: ${result.title}

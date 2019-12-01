@@ -38,10 +38,13 @@ app.post('/upload', upload.single('audio'), function (req, res) {
     },
     config: {
       languageCode: 'en-US',
-      encoding: 'LINEAR16'
     }
   }
+  console.log(file.toString('base64'))
+  console.log('sending audio request...')
   client.recognize(audioRequest).then((data) => {
+    console.log('request done!')
+    console.log(data)
     const transcription = data.response.results
       .map(result => result.alternatives[0].transcript)
       .join('\n');
