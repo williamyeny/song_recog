@@ -57,6 +57,7 @@ let app = new Vue({
                 Artist: ${result.artist}
                 Album: ${result.album}
                 Release date: ${result.release_date}
+                Timestamp in song: ${result.timecode}
               `
             } else {
               vm.mainText = 'Sorry, we couldn\'t find a match :('
