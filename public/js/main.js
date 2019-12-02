@@ -5,8 +5,8 @@ let app = new Vue({
     buttonText : 'Start recording',
     buttonDisabled: false,
     stopped : true,
-    mediaRecorder: null,
-    recordedChunks: [],
+    recorder: null,
+    audioStream: null,
     href: '',
     download: '',
   },
@@ -14,61 +14,55 @@ let app = new Vue({
     let vm = this
     navigator.mediaDevices.getUserMedia({audio : true, video : false})
         .then((stream) => {
-          vm.mediaRecorder = new MediaRecorder(stream, {mimeType : 'audio/webm'});
-          vm.mediaRecorder.addEventListener('dataavailable', function(e) {
-            if (e.data.size > 0) {
-              vm.recordedChunks.push(e.data);
-            }
-          });
-
-          vm.mediaRecorder.addEventListener('stop', () => {
-            /*
-            vm.href = URL.createObjectURL(new Blob(vm.recordedChunks))
-            vm.download = 'test.wav'
-            */
-            let fd = new FormData()
-            fd.append('audio', new Blob(vm.recordedChunks))
-            fetch('/upload', {
-              method: 'post',
-              body: fd
-            }).then(resp => 
-              resp.json()
-            ).then(data => {
-              console.log(data)
-              data = JSON.parse(data)
-              
-              vm.buttonDisabled = false
-              vm.buttonText = 'Start recording'
-              
-              if (data.status === 'success' && data.result != null) {
-                result = data.result
-                vm.mainText = `
-                  Title: ${result.title}
-                  Artist: ${result.artist}
-                  Album: ${result.album}
-                  Release date: ${result.release_date}
-                `
-              } else {
-                vm.mainText = 'Sorry, we couldn\'t find a match :('
-              }
-            })
-          })
-          vm.mediaRecorder.addEventListener('start', () => {
-          })
+          const audioContext = new window.AudioContext()
+          vm.audioStream = stream
+          const input = audioContext.createMediaStreamSource(stream)
+         
+          vm.recorder = new Recorder(input, { numChannels:1 })
         })
   },
   methods : {
     clickButton : function() {
+      let vm = this
       if (this.stopped) {
-        this.mediaRecorder.start()
-        this.recordedChunks = []
-        this.mainText = 'Recording...'
-        this.buttonText = 'Stop recording'
+        vm.recorder.clear()
+        vm.recorder.record()
+        vm.mainText = 'Recording...'
+        vm.buttonText = 'Stop recording'
       } else {
-        this.mediaRecorder.stop()
-        this.mainText = 'Uploading and analyzing...'
-        this.buttonText = 'Please wait'
-        this.buttonDisabled = true
+        vm.mainText = 'Uploading and analyzing...'
+        vm.buttonText = 'Please wait'
+        vm.buttonDisabled = true
+
+        vm.recorder.stop()
+        vm.recorder.exportWAV((blob) => {
+          let fd = new FormData()
+          fd.append('audio', blob)
+          fetch('/upload', {
+            method: 'post',
+            body: fd
+          }).then(resp => 
+            resp.json()
+          ).then(data => {
+            console.log(data)
+            data = JSON.parse(data)
+            
+            vm.buttonDisabled = false
+            vm.buttonText = 'Start recording'
+            
+            if (data.status === 'success' && data.result != null) {
+              result = data.result
+              vm.mainText = `
+                Title: ${result.title}
+                Artist: ${result.artist}
+                Album: ${result.album}
+                Release date: ${result.release_date}
+              `
+            } else {
+              vm.mainText = 'Sorry, we couldn\'t find a match :('
+            }
+          })
+        })
       }
       this.stopped = !this.stopped
     },

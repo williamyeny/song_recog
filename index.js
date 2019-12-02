@@ -19,9 +19,9 @@ app.post('/upload', upload.single('audio'), function (req, res) {
   console.log(req.file)
   let data = {
     'file': fs.createReadStream(req.file.path),
-    'api_token': process.env.AUDD_TOKEN
+    'api_token': process.env.AUDD_TOKEN,
+    'return': 'timecode'
   };
-  console.log(data)
   request({
     uri: 'https://api.audd.io/',
     formData: data,
@@ -40,12 +40,11 @@ app.post('/upload', upload.single('audio'), function (req, res) {
       languageCode: 'en-US',
     }
   }
-  console.log(file.toString('base64'))
   console.log('sending audio request...')
   client.recognize(audioRequest).then((data) => {
     console.log('request done!')
     console.log(data)
-    const transcription = data.response.results
+    const transcription = data[0].results
       .map(result => result.alternatives[0].transcript)
       .join('\n');
     console.log(`Transcription: ${transcription}`);
